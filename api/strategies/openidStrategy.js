@@ -58,6 +58,7 @@ async function customFetch(url, options) {
     if (debugOpenId) {
       logger.debug(`[openidStrategy] Response status: ${response.status} ${response.statusText}`);
       logger.debug(`[openidStrategy] Response headers: ${logHeaders(response.headers)}`);
+      logger.debug(`[openidStrategy] Response body: ${logHeaders(response.body)}`);
     }
 
     if (response.status === 200 && response.headers.has('www-authenticate')) {
@@ -233,7 +234,7 @@ function getFullName(userinfo) {
     return userinfo.family_name;
   }
 
-  return userinfo.username || userinfo.email;
+  return userinfo.username || userinfo.email || userinfo.name ;
 }
 
 /**
@@ -353,7 +354,7 @@ async function setupOpenId() {
             username = userinfo[process.env.OPENID_USERNAME_CLAIM];
           } else {
             username = convertToUsername(
-              userinfo.username || userinfo.given_name || userinfo.email,
+              userinfo.username || userinfo.given_name || userinfo.email || userinfo.name 
             );
           }
 
@@ -362,7 +363,7 @@ async function setupOpenId() {
               provider: 'openid',
               openidId: userinfo.sub,
               username,
-              email: userinfo.email || '',
+              email: userinfo.upn || '',
               emailVerified: userinfo.email_verified || false,
               name: fullName,
             };
@@ -408,12 +409,12 @@ async function setupOpenId() {
           user = await updateUser(user._id, user);
 
           logger.info(
-            `[openidStrategy] login success openidId: ${user.openidId} | email: ${user.email} | username: ${user.username} `,
+            `[openidStrategy] login success openidId: ${user.openidId} | email: ${user.upn} | username: ${user.username} `,
             {
               user: {
                 openidId: user.openidId,
                 username: user.username,
-                email: user.email,
+                email: user.upn,
                 name: user.name,
               },
             },
