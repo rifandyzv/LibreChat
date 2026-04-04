@@ -292,7 +292,7 @@ export function createConversationMethods(
               hits: Array<{ conversationId: string }>;
             }>;
           }
-        ).meiliSearch(search, { filter: `user = "${user}"` });
+        ).meiliSearch(search, { filter: `user = "${user}"`, limit: 200 });
         const matchingIds = Array.isArray(meiliResults.hits)
           ? meiliResults.hits.map((result) => result.conversationId)
           : [];

@@ -64,23 +64,12 @@ const SearchBar = forwardRef((props: SearchBarProps, ref: React.Ref<HTMLDivEleme
     [clearText, location.pathname],
   );
 
-  const sendRequest = useCallback(
-    (value: string) => {
-      if (!value) {
-        return;
-      }
-      queryClient.invalidateQueries([QueryKeys.messages]);
-    },
-    [queryClient],
-  );
-
   const debouncedSetDebouncedQuery = useMemo(
     () =>
       debounce((value: string) => {
         setSearchState((prev) => ({ ...prev, debouncedQuery: value, isTyping: false }));
-        sendRequest(value);
-      }, 500),
-    [setSearchState, sendRequest],
+      }, 350),
+    [setSearchState],
   );
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {

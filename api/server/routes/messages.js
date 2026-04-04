@@ -39,49 +39,43 @@ router.get('/', async (req, res) => {
         { sortField, sortOrder, limit: pageSize, cursor },
       );
     } else if (search) {
-      const searchResults = await db.searchMessages(search, { filter: `user = "${user}"` }, true);
+      const offset = cursor ? Number(cursor) : 0;
+      const searchResults = await db.searchMessages(
+        search,
+        { filter: `user = "${user}"`, limit: pageSize + 1, offset },
+        false,
+      );
 
-      const messages = searchResults.hits || [];
-
-      const result = await db.getConvosQueried(req.user.id, messages, cursor);
-
-      const messageIds = [];
-      const cleanedMessages = [];
-      for (let i = 0; i < messages.length; i++) {
-        let message = messages[i];
-        if (result.convoMap[message.conversationId]) {
-          messageIds.push(message.messageId);
-          cleanedMessages.push(message);
-        }
+      const hits = searchResults.hits || [];
+      const hasMore = hits.length > pageSize;
+      if (hasMore) {
+        hits.pop();
       }
 
-      const dbMessages = await db.getMessages({
-        user,
-        messageId: { $in: messageIds },
-      });
-
-      const dbMessageMap = {};
-      for (const dbMessage of dbMessages) {
-        dbMessageMap[dbMessage.messageId] = dbMessage;
-      }
+      const uniqueConvoIds = [...new Set(hits.map((h) => h.conversationId))];
+      const result =
+        uniqueConvoIds.length > 0
+          ? await db.getConvosQueried(
+              req.user.id,
+              uniqueConvoIds.map((id) => ({ conversationId: id })),
+            )
+          : { convoMap: {} };
 
       const activeMessages = [];
-      for (const message of cleanedMessages) {
-        const convo = result.convoMap[message.conversationId];
-        const dbMessage = dbMessageMap[message.messageId];
-
+      for (const hit of hits) {
+        const convo = result.convoMap[hit.conversationId];
+        if (!convo) {
+          continue;
+        }
         activeMessages.push({
-          ...message,
+          ...hit,
           title: convo.title,
-          conversationId: message.conversationId,
+          conversationId: hit.conversationId,
           model: convo.model,
-          isCreatedByUser: dbMessage?.isCreatedByUser,
-          endpoint: dbMessage?.endpoint,
-          iconURL: dbMessage?.iconURL,
         });
       }
 
-      response = { messages: activeMessages, nextCursor: null };
+      response = { messages: activeMessages, nextCursor: hasMore ? String(offset + pageSize) : null };
     } else {
       response = { messages: [], nextCursor: null };
     }

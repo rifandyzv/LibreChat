@@ -345,7 +345,8 @@ const createMeiliMongooseModel = ({
       params: SearchParams,
       populate: boolean,
     ): Promise<SearchResponse<MeiliIndexable, Record<string, unknown>>> {
-      const data = await index.search(q, params);
+      const searchParams: SearchParams = { limit: 25, offset: 0, ...params };
+      const data = await index.search(q, searchParams);
 
       if (populate) {
         const query: Record<string, unknown> = {};
@@ -363,14 +364,14 @@ const createMeiliMongooseModel = ({
 
         const hitsFromMongoose = await this.find(query, projection).lean();
 
-        const populatedHits = data.hits.map((hit) => {
-          const queryObj: Record<string, unknown> = {};
-          queryObj[primaryKey] = hit[primaryKey];
-          const originalHit = _.find(hitsFromMongoose, (item) => {
-            const typedItem = item as Record<string, unknown>;
-            return typedItem[primaryKey] === hit[primaryKey];
-          });
+        const mongoDocMap = new Map<unknown, Record<string, unknown>>();
+        for (const doc of hitsFromMongoose) {
+          const typedDoc = doc as Record<string, unknown>;
+          mongoDocMap.set(typedDoc[primaryKey], typedDoc);
+        }
 
+        const populatedHits = data.hits.map((hit) => {
+          const originalHit = mongoDocMap.get(hit[primaryKey]);
           return {
             ...(originalHit && typeof originalHit === 'object' ? originalHit : {}),
             ...hit,

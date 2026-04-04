@@ -28,6 +28,7 @@ const messageSchema: Schema<IMessage> = new Schema(
     },
     endpoint: {
       type: String,
+      meiliIndex: true,
     },
     conversationSignature: {
       type: String,
@@ -62,6 +63,7 @@ const messageSchema: Schema<IMessage> = new Schema(
       type: Boolean,
       required: true,
       default: false,
+      meiliIndex: true,
     },
     unfinished: {
       type: Boolean,
@@ -111,6 +113,7 @@ const messageSchema: Schema<IMessage> = new Schema(
     /* frontend components */
     iconURL: {
       type: String,
+      meiliIndex: true,
     },
     metadata: { type: mongoose.Schema.Types.Mixed },
     contextMeta: {
