@@ -21,8 +21,8 @@ export function revokeAllUserKeys(): Promise<unknown> {
   return request.delete(endpoints.revokeAllUserKeys());
 }
 
-export function deleteUser(): Promise<s.TPreset> {
-  return request.delete(endpoints.deleteUser());
+export function deleteUser(payload?: t.TDeleteUserRequest): Promise<unknown> {
+  return request.deleteWithOptions(endpoints.deleteUser(), { data: payload });
 }
 
 export type FavoriteItem = {
@@ -176,6 +176,14 @@ export const updateUserPlugins = (payload: t.TUpdateUserPlugins) => {
 
 export const reinitializeMCPServer = (serverName: string) => {
   return request.post(endpoints.mcpReinitialize(serverName));
+};
+
+export const bindMCPOAuth = (serverName: string): Promise<{ success: boolean }> => {
+  return request.post(endpoints.mcpOAuthBind(serverName));
+};
+
+export const bindActionOAuth = (actionId: string): Promise<{ success: boolean }> => {
+  return request.post(endpoints.actionOAuthBind(actionId));
 };
 
 export const getMCPConnectionStatus = (): Promise<q.MCPConnectionStatusResponse> => {
@@ -825,6 +833,10 @@ export function updatePromptGroup(
   return request.patch(endpoints.updatePromptGroup(variables.id), variables.payload);
 }
 
+export function recordPromptGroupUsage(groupId: string): Promise<{ numberOfGenerations: number }> {
+  return request.post(endpoints.recordPromptGroupUsage(groupId));
+}
+
 export function deletePrompt(payload: t.TDeletePromptVariables): Promise<t.TDeletePromptResponse> {
   return request.delete(endpoints.deletePrompt(payload));
 }
@@ -854,6 +866,10 @@ export function getRandomPrompts(
 }
 
 /* Roles */
+export function listRoles(): Promise<q.ListRolesResponse> {
+  return request.get(`${endpoints.adminRoles()}?limit=200`);
+}
+
 export function getRole(roleName: string): Promise<r.TRole> {
   return request.get(endpoints.getRole(roleName));
 }
@@ -962,8 +978,8 @@ export function updateFeedback(
 }
 
 // 2FA
-export function enableTwoFactor(): Promise<t.TEnable2FAResponse> {
-  return request.get(endpoints.enableTwoFactor());
+export function enableTwoFactor(payload?: t.TEnable2FARequest): Promise<t.TEnable2FAResponse> {
+  return request.post(endpoints.enableTwoFactor(), payload);
 }
 
 export function verifyTwoFactor(payload: t.TVerify2FARequest): Promise<t.TVerify2FAResponse> {
@@ -978,8 +994,10 @@ export function disableTwoFactor(payload?: t.TDisable2FARequest): Promise<t.TDis
   return request.post(endpoints.disableTwoFactor(), payload);
 }
 
-export function regenerateBackupCodes(): Promise<t.TRegenerateBackupCodesResponse> {
-  return request.post(endpoints.regenerateBackupCodes());
+export function regenerateBackupCodes(
+  payload?: t.TRegenerateBackupCodesRequest,
+): Promise<t.TRegenerateBackupCodesResponse> {
+  return request.post(endpoints.regenerateBackupCodes(), payload);
 }
 
 export function verifyTwoFactorTemp(
